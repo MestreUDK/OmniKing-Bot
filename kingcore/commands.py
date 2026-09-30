@@ -4,7 +4,7 @@ from kingcore.security import is_private_admin
 async def health(update, context):
     if update.effective_message:
         app_name = context.application.bot_data["settings"].app_name
-        await update.effective_message.reply_text(f"✅ {app_name} {VERSION} ativo. Fundação de testes.")
+        await update.effective_message.reply_text(f"✅ {app_name} {VERSION} ativo. Versão de testes.")
 
 async def status(update, context):
     settings = context.application.bot_data["settings"]
