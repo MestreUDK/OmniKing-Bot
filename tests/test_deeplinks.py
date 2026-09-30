@@ -36,6 +36,12 @@ class DeepLinkTests(unittest.TestCase):
             with self.subTest(value=value):
                 with self.assertRaises(ValueError):parse_payload(value)
 
+    def test_old_hub_payload_does_not_guess_season(self):
+        target=parse_payload("ver_B23-08163_0")
+        self.assertEqual(target.kind,"legacy_episode_ambiguous")
+        self.assertIsNone(target.season_id)
+        self.assertEqual(target.episode_number,0)
+
     def test_boundaries(self):
         self.assertEqual(parse_payload("").kind,"home")
         self.assertEqual(parse_payload("a"*64).kind,"legacy_lookup")
