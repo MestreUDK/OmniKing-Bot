@@ -36,6 +36,15 @@ def parse_payload(payload: str) -> LinkTarget:
             return LinkTarget("episode", normalize_anime_id(anime), int(season), int(episode))
         except ValueError:
             raise ValueError("Episódio inválido") from None
+    if payload.startswith("ver_"):
+        try:
+            anime, episode = payload[4:].rsplit("_", 1)
+            if not anime or not episode.isdigit():
+                raise ValueError
+            return LinkTarget("legacy_episode_ambiguous", normalize_anime_id(anime),
+                              episode_number=int(episode), legacy=True)
+        except ValueError:
+            raise ValueError("Episódio legado inválido") from None
     if payload.startswith("get_"):
         value = payload[4:]
         if not value.isdigit() or int(value) < 1:
