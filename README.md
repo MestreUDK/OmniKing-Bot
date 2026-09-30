@@ -1,4 +1,4 @@
-# OmniKing 0.1.0-dev1
+# OmniKing 0.1.0-dev2
 
 Fundação de testes do ecossistema AniKing, de Vinícius Oliveira Moraes.
 Este diretório é independente e pode ser a raiz do repositório `OmniKing`.
