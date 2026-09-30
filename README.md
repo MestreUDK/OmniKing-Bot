@@ -1,89 +1,62 @@
-# OmniKing 0.1.0-dev2
+# OmniKing 0.2.0-dev1
 
-Fundação de testes do ecossistema AniKing, de Vinícius Oliveira Moraes.
-Este diretório é independente e pode ser a raiz do repositório `OmniKing`.
+Bot público com catálogo inicial. Diretório independente para o novo repositório.
+Não substitui ainda os bots de produção: player, sagas e funções sociais estão pendentes.
 
-**Esta versão ainda não substitui os bots atuais.** Contém inicialização,
-configuração, tratamento de erros, cache local e diagnóstico. Não contém
-catálogo, player, perfil nem operações de gestão do acervo.
-O OmniKing contém somente rotas iniciais públicas e diagnóstico privado do administrador. Nenhum comando de cadastro, edição ou broadcast é registrado.
+## Configuração e execução
 
-## Executar localmente
-
-Use Python 3.12. No terminal, dentro deste diretório:
+Python 3.12. Crie ambiente virtual, instale requirements.lock.txt e copie
+.env.example para .env. No Linux/macOS:
 
 ```sh
 python -m venv .venv
-```
-
-Linux/macOS:
-
-```sh
 .venv/bin/python -m pip install -r requirements.lock.txt
 cp .env.example .env
 .venv/bin/python diagnostics.py
 .venv/bin/python bot.py
 ```
 
-Windows (PowerShell):
+No Windows use .venv\Scripts\python.exe e Copy-Item .env.example .env.
+Preencha BOT_TOKEN de um novo bot de testes e ADMIN_IDS. Configure CATALOG_API_URL
+como origem HTTPS do backend Hub e OMNIKING_API_SECRET igual ao segredo do servidor.
+LEGACY_PLAYER_USERNAME recebe o username do player atual. Mantenha SUPABASE_URL/KEY
+vazios; não coloque service_role no OmniKing. Sem a ponte configurada, /start e
+/health respondem e o catálogo informa que precisa de configuração.
 
-```powershell
-.venv\Scripts\python.exe -m pip install -r requirements.lock.txt
-Copy-Item .env.example .env
-.venv\Scripts\python.exe diagnostics.py
-.venv\Scripts\python.exe bot.py
-```
+diagnostics.py não acessa serviços por padrão. --catalog faz uma leitura da API
+como o primeiro administrador da lista; exige acesso ao Hub/canal, não altera dados.
+--database permanece apenas como probe legado de leitura direta, sem validar RLS.
+/status consulta a API de catálogo somente para admin no privado.
 
-**Antes de executar diagnostics.py e bot.py**, preencha `.env` com o BOT_TOKEN
-de um bot novo de testes e seu ADMIN_IDS numérico. Cada projeto precisa de
-um token próprio. Não execute uma segunda instância usando o token de um bot
-ativo. Nenhuma mensagem é enviada automaticamente ao administrador na inicialização.
+## Catálogo presente
 
-SUPABASE_URL e SUPABASE_KEY podem ficar vazios nesta etapa. Quando ambos
-estiverem configurados, `/status` faz uma consulta sem retornar registros de
-`animes`. O comando local `python diagnostics.py --database` também faz essa
-consulta. Sem essa opção, diagnostics.py não se conecta a serviços externos.
-Uma resposta da API não comprova acesso aos dados, RLS correta ou schema completo.
+/buscar (/busca), /alfabeto, /atalhos A|NUM|PROIBIDOS, /recentes, /recomendar [filtros]
+e /anime ID. Deep links anime_, busca_/buscar_, atalhos_ e IDs legados de anime
+abrem consultas. Cada consulta/callback verifica autorização no Hub. Nenhum comando
+administrativo de cadastro, edição, exclusão ou comunicação em massa é registrado.
 
-OmniKing rejeita chaves sb_secret_ e JWT com role service_role. Isso é somente uma barreira de configuração; a autorização real depende das políticas do banco. Uma chave publishable/anon não representa automaticamente o usuário do Telegram. Não afrouxe RLS para fazer o teste passar.
+Filtros de busca: dub/leg, ano (=2024, >=2020) e classificação (=16, <=14). Termos
+com acentos são normalizados; nome, AB/aliases, sinopse, tags e estúdio entram na
+busca. Termos combinados exigem todos os termos. Busca fuzzy/inline, capas no bot,
+botões extras e avaliações ainda pendentes. Ficha mantém links LEG/DUB e abertura
+do player atual; não entrega episódios nem usa file_id de outro bot.
 
-## Comandos presentes
+Recentes usa a data do ID legado; IDs customizados sem data vêm depois. AB define
+nome curto da listagem, quando presente. Paginação de 8 itens; cache de sessões
+limitado a 128 listas, TTL 10 minutos, sem persistência entre reinícios.
 
-- `/start`: tela inicial.
-- `/ajuda` ou `/help`: orientações.
-- `/health`: verifica resposta do processo, sem consultar Supabase.
-- `/status`: diagnóstico apenas para administrador no privado.
-- Payloads de `/start` são analisados, mas ainda não abrem animes ou episódios. A resposta deixa essa limitação explícita.
-
-## Testes locais
+## Testes e implantação
 
 ```sh
 python -m unittest discover -s tests -v
 ```
 
-Execute com o Python do ambiente virtual. Os testes usam o roteador real da
-biblioteca Telegram com transporte simulado. Não precisam de `.env`, tokens
-reais, Telegram nem banco remoto.
+Banco/API/Telegram são simulados. README principal e docs/06_SCHEMA_E_TESTE_CATALOGO.md
+explicam o aceite remoto. Discloud aponta para bot.py, Python 3.12; memória e carga
+precisam de medição com o catálogo real. Envie o conteúdo desta pasta como raiz do
+repositório. .env não vai para Git ou pacote público. Se a hospedagem não injeta
+variáveis, inclua .env apenas no pacote privado de implantação.
 
-## Discloud e GitHub
-
-`discloud.config` aponta para `bot.py`, Python 3.12 e 180 MB como ponto de
-partida; o consumo precisará ser medido após migrar os domínios. O perfil de
-implantação ainda não foi exercitado na Discloud.
-
-Envie o **conteúdo desta pasta** como raiz do novo repositório. `.env` fica
-ignorado pelo Git. Para um pacote privado de implantação, inclua seu `.env`
-configurado se a hospedagem não injetar as variáveis. `.discloudignore` permite
-esse arquivo para a implantação, mas não o inclua no repositório ou em pacotes
-públicos. O pacote entregue vem sem credenciais.
-
-`kingcore/` é uma cópia versionada do núcleo desta etapa. Os dois repositórios
-funcionam sem instalar um ao outro; correções no núcleo devem ser aplicadas aos
-dois até que seja extraído como pacote comum. Nenhum código importa os bots legados.
-
-## Próximo marco
-
-Migrar busca, alfabeto, recentes, recomendação e visualização, mantendo as verificações VIP/ban/inscrição.
-
-Consulte a pasta `docs/` do pacote principal para inventário, divergências do
-plano, consulta SQL de diagnóstico e critérios de aceite.
+kingcore é versionado em cópias idênticas nos dois bots. Não há import do legado.
+O próximo marco inclui equivalência do catálogo e migração de social/player; a
+dependência do backend Hub poderá ser extraída para serviço comum posteriormente.
